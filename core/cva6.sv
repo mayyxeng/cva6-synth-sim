@@ -885,10 +885,10 @@ module cva6 import ariane_pkg::*; #(
   int f;
   logic [63:0] cycles;
 
-  initial begin
-    f = $fopen("trace_hart_00.dasm", "w");
-  end
-
+  // initial begin
+  //   f = $fopen("trace_hart_00.dasm", "w");
+  // end
+  logic vlt_trace_commit;
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (~rst_ni) begin
       cycles <= 0;
@@ -904,16 +904,18 @@ module cva6 import ariane_pkg::*; #(
         endcase
       end
       for (int i = 0; i < NR_COMMIT_PORTS; i++) begin
-        if (commit_ack[i] && !commit_instr_id_commit[i].ex.valid) begin
-          $fwrite(f, "%d 0x%0h %s (0x%h) DASM(%h)\n", cycles, commit_instr_id_commit[i].pc, mode, commit_instr_id_commit[i].ex.tval[31:0], commit_instr_id_commit[i].ex.tval[31:0]);
-        end else if (commit_ack[i] && commit_instr_id_commit[i].ex.valid) begin
-          if (commit_instr_id_commit[i].ex.cause == 2) begin
-            $fwrite(f, "Exception Cause: Illegal Instructions, DASM(%h) PC=%h\n", commit_instr_id_commit[i].ex.tval[31:0], commit_instr_id_commit[i].pc);
-          end else begin
-            if (debug_mode) begin
-              $fwrite(f, "%d 0x%0h %s (0x%h) DASM(%h)\n", cycles, commit_instr_id_commit[i].pc, mode, commit_instr_id_commit[i].ex.tval[31:0], commit_instr_id_commit[i].ex.tval[31:0]);
+        if (vlt_trace_commit) begin
+          if (commit_ack[i] && !commit_instr_id_commit[i].ex.valid) begin
+            $display("%d 0x%0h %s (0x%h) DASM(%h)", cycles, commit_instr_id_commit[i].pc, mode, commit_instr_id_commit[i].ex.tval[31:0], commit_instr_id_commit[i].ex.tval[31:0]);
+          end else if (commit_ack[i] && commit_instr_id_commit[i].ex.valid) begin
+            if (commit_instr_id_commit[i].ex.cause == 2) begin
+              $display("Exception Cause: Illegal Instructions, DASM(%h) PC=%h", commit_instr_id_commit[i].ex.tval[31:0], commit_instr_id_commit[i].pc);
             end else begin
-              $fwrite(f, "Exception Cause: %5d, DASM(%h) PC=%h\n", commit_instr_id_commit[i].ex.cause, commit_instr_id_commit[i].ex.tval[31:0], commit_instr_id_commit[i].pc);
+              if (debug_mode) begin
+                $display("%d 0x%0h %s (0x%h) DASM(%h)", cycles, commit_instr_id_commit[i].pc, mode, commit_instr_id_commit[i].ex.tval[31:0], commit_instr_id_commit[i].ex.tval[31:0]);
+              end else begin
+                $display("Exception Cause: %5d, DASM(%h) PC=%h", commit_instr_id_commit[i].ex.cause, commit_instr_id_commit[i].ex.tval[31:0], commit_instr_id_commit[i].pc);
+              end
             end
           end
         end
@@ -922,9 +924,9 @@ module cva6 import ariane_pkg::*; #(
     end
   end
 
-  final begin
-    $fclose(f);
-  end
+  // final begin
+  //   $fclose(f);
+  // end
 `endif // VERILATOR
 //pragma translate_on
 

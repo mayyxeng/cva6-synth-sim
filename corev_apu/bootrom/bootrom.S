@@ -1,12 +1,10 @@
+#define DRAM_BASE 0x80000000
+
 .section .text.start, "ax", @progbits
 .globl _start
 _start:
-# bootrom.sv need to be functional in 64 and 32 bits,
-# li s0, DRAM_BASE creates instructions not compatible with both
-# versions. That's why we have replaced it by li and slli instructions
-# to generates code compatible with both versions.
-  li s0, 1
-  slli s0, s0, 31
+  # csrwi 0x7c1, 0 // disable chicken bits
+  li s0, DRAM_BASE
   csrr a0, mhartid
   la a1, _dtb
   jr s0
@@ -14,8 +12,11 @@ _start:
 .section .text.hang, "ax", @progbits
 .globl _hang
 _hang:
+  j _start;
+  csrwi 0x7c1, 0 // disable chicken bits
   csrr a0, mhartid
   la a1, _dtb
+  csrwi mie, 0
 1:
   wfi
   j 1b
@@ -24,4 +25,4 @@ _hang:
 .globl _dtb
 .align 5, 0
 _dtb:
-.incbin "ariane.dtb"
+.ascii "DTB goes here"
