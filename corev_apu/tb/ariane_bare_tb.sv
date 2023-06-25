@@ -153,12 +153,21 @@ module ariane_bare_tb #(
     // ------------------------------
     // Memory + Exclusive Access
     // ------------------------------
-    AXI_BUS #(
-        .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH        ),
-        .AXI_DATA_WIDTH ( AXI_DATA_WIDTH           ),
-        .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
-        .AXI_USER_WIDTH ( AXI_USER_WIDTH           )
-    ) dram();
+
+    // AXI_BUS #(
+    //     .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH        ),
+    //     .AXI_DATA_WIDTH ( AXI_DATA_WIDTH           ),
+    //     .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
+    //     .AXI_USER_WIDTH ( AXI_USER_WIDTH           )
+    // ) dram_up ();
+
+    // AXI_BUS #(
+    //     .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH        ),
+    //     .AXI_DATA_WIDTH ( AXI_DATA_WIDTH           ),
+    //     .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
+    //     .AXI_USER_WIDTH ( AXI_USER_WIDTH           )
+    // ) dram ();
+
 
     logic                         req;
     logic                         we;
@@ -169,40 +178,87 @@ module ariane_bare_tb #(
     logic [AXI_USER_WIDTH-1:0]    wuser;
     logic [AXI_USER_WIDTH-1:0]    ruser;
 
-    axi_riscv_atomics_wrap #(
-        .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH        ),
-        .AXI_DATA_WIDTH ( AXI_DATA_WIDTH           ),
-        .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
-        .AXI_USER_WIDTH ( AXI_USER_WIDTH           ),
-        .AXI_MAX_WRITE_TXNS ( 1  ),
-        .RISCV_WORD_WIDTH   ( 64 )
-    ) i_axi_riscv_atomics (
-        .clk_i,
-        .rst_ni ( rst_n                    ),
-        .slv    ( master[ariane_soc::DRAM] ),
-        .mst    ( dram                     )
-    );
+    // axi_cut_intf #(
+    //     .BYPASS ( 1'b0 ),
+    //     .ADDR_WIDTH ( AXI_ADDRESS_WIDTH ),
+    //     .DATA_WIDTH ( AXI_DATA_WIDTH ),
+    //     .ID_WIDTH ( ariane_soc::IdWidthSlave ),
+    //     .USER_WIDTH ( AXI_USER_WIDTH )
+    // ) i_axi_cut_bus_side (
+    //     .clk_i ( clk_i ),
+    //     .rst_ni ( rst_ni ),
+    //     .in ( master[ariane_soc::DRAM] ),
+    //     .out ( dram_up )
+    // );
 
-    logic t_r_vld, t_r_rdy, t_ar_vld, t_ar_rdy;
-    logic [AXI_ADDRESS_WIDTH - 1 : 0] t_ar_addr;
-    logic [AXI_DATA_WIDTH - 1 : 0] t_r_data;
+    // axi_riscv_atomics_wrap #(
+    //     .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH        ),
+    //     .AXI_DATA_WIDTH ( AXI_DATA_WIDTH           ),
+    //     .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
+    //     .AXI_USER_WIDTH ( AXI_USER_WIDTH           ),
+    //     .AXI_MAX_WRITE_TXNS ( 1  ),
+    //     .RISCV_WORD_WIDTH   ( 64 )
+    // ) i_axi_riscv_atomics (
+    //     .clk_i  ( clk_i                    ),
+    //     .rst_ni ( rst_n                    ),
+    //     .slv    ( master[ariane_soc::DRAM] ),
+    //     .mst    ( dram                     )
+    // );
 
-    always_ff @(posedge clk_i) begin
-        if (verbose) begin
-            t_r_vld <= dram.r_valid;
-            t_r_rdy <= dram.r_ready;
-            t_ar_vld <= dram.ar_valid;
-            t_ar_rdy <= dram.ar_ready;
-            t_ar_addr <= dram.ar_addr;
-            t_r_data <= dram.r_data;
-            if(t_r_vld && t_r_rdy) begin
-                $display("@%d rdata: %h", cycle_count, t_r_data);
-            end
-            if (t_ar_vld && t_ar_rdy) begin
-                $display("@%d raddr: %h", cycle_count, t_ar_addr);
-            end
-        end
-    end
+    // AXI_BUS #(
+    //     .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH        ),
+    //     .AXI_DATA_WIDTH ( AXI_DATA_WIDTH           ),
+    //     .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
+    //     .AXI_USER_WIDTH ( AXI_USER_WIDTH           )
+    // ) dram_delayed();
+
+    // axi_delayer_intf #(
+    //     .AXI_ID_WIDTH        ( ariane_soc::IdWidthSlave ),
+    //     .AXI_ADDR_WIDTH      ( AXI_ADDRESS_WIDTH        ),
+    //     .AXI_DATA_WIDTH      ( AXI_DATA_WIDTH           ),
+    //     .AXI_USER_WIDTH      ( AXI_USER_WIDTH           ),
+    //     .STALL_RANDOM_INPUT  ( StallRandomInput         ),
+    //     .STALL_RANDOM_OUTPUT ( StallRandomOutput        ),
+    //     .FIXED_DELAY_INPUT   ( 0                        ),
+    //     .FIXED_DELAY_OUTPUT  ( 0                        )
+    // ) i_axi_delayer (
+    //     .clk_i  ( clk_i        ),
+    //     .rst_ni ( ndmreset_n   ),
+    //     .slv    ( dram         ),
+    //     .mst    ( dram_delayed )
+    // );
+    // axi_cut_intf #(
+    //     .BYPASS ( 1'b0 ),
+    //     .ADDR_WIDTH ( AXI_ADDRESS_WIDTH ),
+    //     .DATA_WIDTH ( AXI_DATA_WIDTH ),
+    //     .ID_WIDTH ( ariane_soc::IdWidthSlave ),
+    //     .USER_WIDTH ( AXI_USER_WIDTH )
+    // ) i_axi_cut_dram_side (
+    //     .clk_i ( clk_i ),
+    //     .rst_ni ( rst_ni ),
+    //     .in ( dram_atom ),
+    //     .out ( dram_mem )
+    // );
+    // logic t_r_vld, t_r_rdy, t_ar_vld, t_ar_rdy;
+    // logic [AXI_ADDRESS_WIDTH - 1 : 0] t_ar_addr;
+    // logic [AXI_DATA_WIDTH - 1 : 0] t_r_data;
+
+    // always_ff @(posedge clk_i) begin
+    //     if (verbose) begin
+    //         t_r_vld <= dram.r_valid;
+    //         t_r_rdy <= dram.r_ready;
+    //         t_ar_vld <= dram.ar_valid;
+    //         t_ar_rdy <= dram.ar_ready;
+    //         t_ar_addr <= dram.ar_addr;
+    //         t_r_data <= dram.r_data;
+    //         if(t_r_vld && t_r_rdy) begin
+    //             $display("@%d rdata: %h", cycle_count, t_r_data);
+    //         end
+    //         if (t_ar_vld && t_ar_rdy) begin
+    //             $display("@%d raddr: %h", cycle_count, t_ar_addr);
+    //         end
+    //     end
+    // end
 
     axi2mem #(
         .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
@@ -212,7 +268,7 @@ module ariane_bare_tb #(
     ) i_axi2mem (
         .clk_i  ( clk_i        ),
         .rst_ni ( rst_n        ),
-        .slave  ( dram         ),
+        .slave  ( master[ariane_soc::DRAM]         ),
         .req_o  ( req          ),
         .we_o   ( we           ),
         .addr_o ( addr         ),
@@ -266,7 +322,7 @@ module ariane_bare_tb #(
         MaxMstTrans: unsigned'(1), // Probably requires update
         MaxSlvTrans: unsigned'(1), // Probably requires update
         FallThrough: 1'b0,
-        LatencyMode: axi_pkg::NO_LATENCY,
+        LatencyMode: axi_pkg::CUT_ALL_PORTS,
         AxiIdWidthSlvPorts: unsigned'(ariane_soc::IdWidth),
         AxiIdUsedSlvPorts: unsigned'(ariane_soc::IdWidth),
         UniqueIds: 1'b0,
@@ -303,10 +359,9 @@ module ariane_bare_tb #(
         .rst_ni               ( rst_n               ),
         .boot_addr_i          ( ariane_soc::ROMBase ), // start fetching from ROM
         .hart_id_i            ( {56'h0, hart_id}    ),
-        .irq_i                ( irqs                ),
-        .ipi_i                ( ipi                 ),
+        .irq_i                ( '0                  ),
+        .ipi_i                ( '0                  ),
         .time_irq_i           ( timer_irq           ),
-        .rvfi_o               ( /* unconnected */   ),
         .debug_req_i          ( 1'b0                ),
         .axi_req_o            ( axi_ariane_req      ),
         .axi_resp_i           ( axi_ariane_resp     )

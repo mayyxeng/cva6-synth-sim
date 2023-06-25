@@ -11,7 +11,7 @@ endif
 
 verilator ?= verilator
 
-target := cv64a6_imafdc_sv39
+target := cv64a6_imafdc_sv39_openpiton
 
 top := ariane_bare_tb
 
@@ -74,21 +74,38 @@ verilate_command := $(verilator) verilator_config.vlt                           
                     -Wno-ASSIGNDLY                                                                               \
                     -Wno-DECLFILENAME                                                                            \
                     -Wno-UNUSED                                                                                  \
-                    -Wno-UNOPTFLAT                                                                               \
-                    -Wno-BLKANDNBLK                                                                              \
                     -Wno-style                                                                                   \
 					-Wno-WIDTH                                                                                   \
 					-no-timing                                                                                   \
 					-Wno-lint                                                                                    \
                     -Wno-WIDTHCONCAT                                                                             \
+                    -Wno-BLKANDNBLK                                                                              \
                     --stats --stats-vars                                                                         \
                     $(list_incdir) --top-module $(top)                                                           \
                     --Mdir $(ver-library) -O3                                                                    \
-                    --exe corev_apu/tb/ariane_bare_harness.cpp
+                    --exe corev_apu/tb/ariane_bare_harness.cpp   -CFLAGS -O3 --debug-emitv --debugi-V3Split 3    \
+                    --dumpi-V3Split 3 --dumpi-graph 0 -fno-table \
+                    --debugi-V3SplitVar 3
+
+conversion_cmd := sv2v  -DVERILATOR                                            \
+                        vendor/openhwgroup/cvfpu/src/fpnew_top.sv              \
+                        vendor/openhwgroup/cvfpu/src/fpnew_pkg.sv              \
+                        vendor/pulp-platform/common_cells/src/cf_math_pkg.sv   \
+                       -y vendor/openhwgroup/cvfpu/src/                        \
+                       -I vendor/openhwgroup/cvfpu/src/                        \
+                       -y vendor/pulp-platform/common_cells/src                \
+                       -I vendor/pulp-platform/common_cells/include            \
+                       --top fpnew_top --dump-prefix=temp/
 
 
+
+
+default: verilate
 
 verilate:
 	@echo "[Verilator] Building Model$(if $(PROFILE), for Profiling,)"
-	$(verilate_command) && \
-    $(MAKE) -C $(ver-library) -f V$(top).mk -j 30
+	$(verilate_command)
+	$(MAKE) -C obj_dir -f V$(top).mk -j 30
+
+convert:
+	$(conversion_cmd)

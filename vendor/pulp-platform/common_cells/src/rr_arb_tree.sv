@@ -93,10 +93,10 @@ module rr_arb_tree #(
   input  idx_t                rr_i,
   /// Input requests arbitration.
   input  logic    [NumIn-1:0] req_i,
-  /* verilator lint_off UNOPTFLAT */
+
   /// Input request is granted.
-  output logic    [NumIn-1:0] gnt_o,
-  /* verilator lint_on UNOPTFLAT */
+  output logic    [NumIn-1:0] gnt_o /* verilator split_var */,
+
   /// Input data for arbitration.
   input  DataType [NumIn-1:0] data_i,
   /// Output request is valid.
@@ -128,12 +128,12 @@ module rr_arb_tree #(
   end else begin : gen_arbiter
     localparam int unsigned NumLevels = unsigned'($clog2(NumIn));
 
-    /* verilator lint_off UNOPTFLAT */
+
     idx_t    [2**NumLevels-2:0] index_nodes; // used to propagate the indices
     DataType [2**NumLevels-2:0] data_nodes;  // used to propagate the data
     logic    [2**NumLevels-2:0] gnt_nodes;   // used to propagate the grant to masters
     logic    [2**NumLevels-2:0] req_nodes;   // used to propagate the requests to slave
-    /* lint_off */
+
     idx_t                       rr_q;
     logic [NumIn-1:0]           req_d;
 

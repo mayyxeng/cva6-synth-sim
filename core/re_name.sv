@@ -36,13 +36,11 @@ module re_name import ariane_pkg::*; (
     // Re-naming
     // -------------------
     always_comb begin
-        // MSB of the renamed source register addresses
-        logic name_bit_rs1, name_bit_rs2, name_bit_rs3, name_bit_rd;
+
 
         // default assignments
         re_name_table_gpr_n = re_name_table_gpr_q;
         re_name_table_fpr_n = re_name_table_fpr_q;
-        issue_instr_o       = issue_instr_i;
 
         if (issue_ack_i && !flush_unissied_instr_i) begin
             // if we acknowledge the instruction tic the corresponding destination register
@@ -51,7 +49,21 @@ module re_name import ariane_pkg::*; (
             else
                 re_name_table_gpr_n[issue_instr_i.rd] = re_name_table_gpr_q[issue_instr_i.rd] ^ 1'b1;
         end
+        // we don't want to re-name gp register zero, it is non-writeable anyway
+        re_name_table_gpr_n[0] = 1'b0;
 
+        // Handle flushes
+        if (flush_i) begin
+            re_name_table_gpr_n = '0;
+            re_name_table_fpr_n = '0;
+        end
+
+    end
+    always_comb begin
+         // MSB of the renamed source register addresses
+        logic name_bit_rs1, name_bit_rs2, name_bit_rs3, name_bit_rd;
+
+        issue_instr_o       = issue_instr_i;
         // select name bit according to the register file used for source operands
         name_bit_rs1 = is_rs1_fpr(issue_instr_i.op) ? re_name_table_fpr_q[issue_instr_i.rs1]
                                                     : re_name_table_gpr_q[issue_instr_i.rs1];
@@ -74,16 +86,6 @@ module re_name import ariane_pkg::*; (
         end
         // re-name the destination register
         issue_instr_o.rd = { ENABLE_RENAME & name_bit_rd, issue_instr_i.rd[4:0] };
-
-        // we don't want to re-name gp register zero, it is non-writeable anyway
-        re_name_table_gpr_n[0] = 1'b0;
-
-        // Handle flushes
-        if (flush_i) begin
-            re_name_table_gpr_n = '0;
-            re_name_table_fpr_n = '0;
-        end
-
     end
 
     // -------------------

@@ -196,12 +196,28 @@ module mmu import ariane_pkg::*; #(
     //-----------------------
     logic match_any_execute_region;
     logic pmp_instr_allow;
+    logic [riscv::VLEN-1:0] fetch_paddr;
+    always_comb begin : comp_paddr;
+         // 4K page
+        fetch_paddr =icache_areq_i.fetch_vaddr[riscv::PLEN-1:0];
+        if(enable_translation_i) begin
+            fetch_paddr = {itlb_content.ppn, icache_areq_i.fetch_vaddr[11:0]};
+            // Mega page
+            if (itlb_is_2M) begin
+                fetch_paddr[20:12] = icache_areq_i.fetch_vaddr[20:12];
+            end
+            // Giga page
+            if (itlb_is_1G) begin
+                fetch_paddr[29:12] = icache_areq_i.fetch_vaddr[29:12];
+            end
+        end
 
+    end
     // The instruction interface is a simple request response interface
     always_comb begin : instr_interface
         // MMU disabled: just pass through
         icache_areq_o.fetch_valid  = icache_areq_i.fetch_req;
-        icache_areq_o.fetch_paddr  = icache_areq_i.fetch_vaddr[riscv::PLEN-1:0]; // play through in case we disabled address translation
+        icache_areq_o.fetch_paddr  = fetch_paddr;
         // two potential exception sources:
         // 1. HPTW threw an exception -> signal with a page fault exception
         // 2. We got an access error because of insufficient permissions -> throw an access exception
@@ -223,17 +239,7 @@ module mmu import ariane_pkg::*; #(
 
             icache_areq_o.fetch_valid = 1'b0;
 
-            // 4K page
-            icache_areq_o.fetch_paddr = {itlb_content.ppn, icache_areq_i.fetch_vaddr[11:0]};
-            // Mega page
-            if (itlb_is_2M) begin
-                icache_areq_o.fetch_paddr[20:12] = icache_areq_i.fetch_vaddr[20:12];
-            end
-            // Giga page
-            if (itlb_is_1G) begin
-                icache_areq_o.fetch_paddr[29:12] = icache_areq_i.fetch_vaddr[29:12];
-            end
-
+            // match_any_execute_region = ariane_pkg::is_inside_execute_regions(ArianeCfg, {{64-riscv::PLEN{1'b0}}, icache_areq_o.fetch_paddr});
             // ---------
             // ITLB Hit
             // --------
@@ -262,12 +268,12 @@ module mmu import ariane_pkg::*; #(
         // if it didn't match any execute region throw an `Instruction Access Fault`
         // or: if we are not translating, check PMPs immediately on the paddr
         if ((!match_any_execute_region && !ptw_error) || (!enable_translation_i && !pmp_instr_allow)) begin
-          icache_areq_o.fetch_exception = {riscv::INSTR_ACCESS_FAULT, {{riscv::XLEN-riscv::PLEN{1'b0}}, icache_areq_o.fetch_paddr}, 1'b1};
+          icache_areq_o.fetch_exception = {riscv::INSTR_ACCESS_FAULT, {{riscv::XLEN-riscv::PLEN{1'b0}}, fetch_paddr}, 1'b1};
         end
     end
 
     // check for execute flag on memory
-    assign match_any_execute_region = ariane_pkg::is_inside_execute_regions(ArianeCfg, {{64-riscv::PLEN{1'b0}}, icache_areq_o.fetch_paddr});
+    assign match_any_execute_region = ariane_pkg::is_inside_execute_regions(ArianeCfg, {{64-riscv::PLEN{1'b0}}, fetch_paddr});
 
     // Instruction fetch
     pmp #(
@@ -275,7 +281,7 @@ module mmu import ariane_pkg::*; #(
         .PMP_LEN    ( riscv::PLEN - 2        ),
         .NR_ENTRIES ( ArianeCfg.NrPMPEntries )
     ) i_pmp_if (
-        .addr_i        ( icache_areq_o.fetch_paddr ),
+        .addr_i        ( fetch_paddr               ),
         .priv_lvl_i,
         // we will always execute on the instruction fetch port
         .access_type_i ( riscv::ACCESS_EXEC        ),

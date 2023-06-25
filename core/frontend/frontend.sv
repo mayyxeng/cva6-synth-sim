@@ -254,10 +254,11 @@ module frontend import ariane_pkg::*; #(
     // 1. We mispredicted
     // 2. Want to flush the whole processor front-end
     // 3. Need to replay an instruction because the fetch-fifo was full
-    assign icache_dreq_o.kill_s1 = is_mispredict | flush_i | replay;
+    wire kill_s1_ = is_mispredict | flush_i | replay;
+    assign icache_dreq_o.kill_s1 = kill_s1_;
     // if we have a valid branch-prediction we need to only kill the last cache request
     // also if we killed the first stage we also need to kill the second stage (inclusive flush)
-    assign icache_dreq_o.kill_s2 = icache_dreq_o.kill_s1 | bp_valid;
+    assign icache_dreq_o.kill_s2 = kill_s1_ | bp_valid;
 
     // Update Control Flow Predictions
     bht_update_t bht_update;

@@ -84,7 +84,7 @@ module scoreboard #(
   logic                    issue_full, issue_en;
   logic [BITS_ENTRIES:0]   issue_cnt_n,      issue_cnt_q;
   logic [BITS_ENTRIES-1:0] issue_pointer_n,  issue_pointer_q;
-  logic [NR_COMMIT_PORTS-1:0][BITS_ENTRIES-1:0] commit_pointer_n, commit_pointer_q;
+  logic [NR_COMMIT_PORTS-1:0][BITS_ENTRIES-1:0] commit_pointer_n /* verilator split_var */, commit_pointer_q;
   logic [$clog2(NR_COMMIT_PORTS):0] num_commit;
 
   // the issue queue is full don't issue any new instructions

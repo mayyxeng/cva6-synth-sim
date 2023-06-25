@@ -247,11 +247,11 @@ module wt_dcache_missunit import ariane_pkg::*; import wt_cache_pkg::*; #(
   assign mem_data_o.way    = (amo_sel) ? '0                  : repl_way;
   assign mem_data_o.data   = (amo_sel) ? amo_data            : miss_wdata_i[miss_port_idx];
   assign mem_data_o.user   = (amo_sel) ? amo_user            : miss_wuser_i[miss_port_idx];
-  assign mem_data_o.size   = (amo_sel) ? amo_req_i.size      : miss_size_i [miss_port_idx];
+  wire [2:0] o_size = (amo_sel) ? amo_req_i.size      : miss_size_i [miss_port_idx];
+  assign mem_data_o.size   = o_size;
   assign mem_data_o.amo_op = (amo_sel) ? amo_req_i.amo_op    : AMO_NONE;
-
   assign tmp_paddr         = (amo_sel) ? amo_req_i.operand_a[riscv::PLEN-1:0] : miss_paddr_i[miss_port_idx];
-  assign mem_data_o.paddr  = wt_cache_pkg::paddrSizeAlign(tmp_paddr, mem_data_o.size);
+  assign mem_data_o.paddr  = wt_cache_pkg::paddrSizeAlign(tmp_paddr, o_size);
 
 ///////////////////////////////////////////////////////
 // back-off mechanism for LR/SC completion guarantee

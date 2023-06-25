@@ -66,6 +66,11 @@ module decoder import ariane_pkg::*; (
     riscv::xlen_t imm_uj_type;
     riscv::xlen_t imm_bi_type;
 
+    // ---------------------
+    // Exception handling
+    // ---------------------
+    riscv::xlen_t interrupt_cause;
+
     always_comb begin : decoder
 
         imm_select                  = NOIMM;
@@ -1132,12 +1137,12 @@ module decoder import ariane_pkg::*; (
                 imm_select          = RS3;
             end
         end
-    end
+    // end
 
     // --------------------------------
     // Sign extend immediate
     // --------------------------------
-    always_comb begin : sign_extend
+    // always_comb begin : sign_extend
         imm_i_type  = { {riscv::XLEN-12{instruction_i[31]}}, instruction_i[31:20] };
         imm_s_type  = { {riscv::XLEN-12{instruction_i[31]}}, instruction_i[31:25], instruction_i[11:7] };
         imm_sb_type = { {riscv::XLEN-13{instruction_i[31]}}, instruction_i[31], instruction_i[7], instruction_i[30:25], instruction_i[11:8], 1'b0 };
@@ -1178,17 +1183,12 @@ module decoder import ariane_pkg::*; (
                 instruction_o.use_imm = 1'b0;
             end
         endcase
-    end
+    // end
 
-    // ---------------------
-    // Exception handling
-    // ---------------------
-    riscv::xlen_t interrupt_cause;
 
-    // this instruction has already executed if the exception is valid
-    assign instruction_o.valid   = instruction_o.ex.valid;
 
-    always_comb begin : exception_handling
+
+    // always_comb begin : exception_handling
         interrupt_cause       = '0;
         instruction_o.ex      = ex_i;
         // look if we didn't already get an exception in any previous
@@ -1277,5 +1277,7 @@ module decoder import ariane_pkg::*; (
           instruction_o.ex.valid = 1'b1;
           instruction_o.ex.cause = riscv::DEBUG_REQUEST;
         end
+        // this instruction has already executed if the exception is valid
+        instruction_o.valid = instruction_o.ex.valid;
     end
 endmodule
