@@ -95,7 +95,7 @@ module rr_arb_tree #(
   input  logic    [NumIn-1:0] req_i,
 
   /// Input request is granted.
-  output logic    [NumIn-1:0] gnt_o /* verilator split_var */,
+  output logic    [NumIn-1:0] gnt_o,
 
   /// Input data for arbitration.
   input  DataType [NumIn-1:0] data_i,
